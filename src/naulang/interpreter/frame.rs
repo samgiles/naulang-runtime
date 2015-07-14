@@ -33,6 +33,10 @@ impl Frame {
 		self.stack.pop()
 	}
 
+	pub fn push(&mut self, object: Object) -> () {
+		self.stack.push(object);
+	}
+
 	pub fn set_local_at(&mut self, index: usize, object: Object) -> () {
 		self.locals[index] = object;
 	}
@@ -67,5 +71,24 @@ mod tests {
 		};
 
 		assert!(internal_value == 42);
+	}
+
+	#[test]
+	fn test_push_pop() {
+		let mut frame = Frame::new(3, 1);
+		let integer_object = IntegerObject::new(42);
+		frame.push(Object::Integer(integer_object));
+		let popped_object = frame.pop();
+
+		let internal_value = match popped_object {
+			Some(object) => match object {
+				Object::Integer(i_obj) => i_obj.get_value(),
+				_ => 0,
+			},
+			None => 0
+		};
+
+		assert!(internal_value == 42);
+
 	}
 }
