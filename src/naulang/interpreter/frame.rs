@@ -85,6 +85,5 @@ mod tests {
 		let internal_value = extract_primitive_integer(popped_object, 0);
 
 		assert!(internal_value == 42);
-
 	}
 }
