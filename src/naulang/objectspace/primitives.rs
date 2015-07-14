@@ -1,6 +1,5 @@
 use std::vec;
 
-#[derive(Debug)]
 pub enum Object {
 	String(StringObject),
 	Integer(IntegerObject),
