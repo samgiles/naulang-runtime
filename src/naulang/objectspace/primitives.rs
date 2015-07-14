@@ -1,4 +1,5 @@
 use std::vec;
+use naulang::interpreter::frame::Frame;
 
 pub enum Object {
 	String(StringObject),
@@ -6,6 +7,16 @@ pub enum Object {
 	Float(FloatObject),
 	Boolean(BooleanObject),
 	Array(ArrayObject),
+	Method(MethodObject),
+}
+
+pub struct MethodObject {
+	literals: vec::Vec<Object>,
+	bytecodes: vec::Vec<u32>,
+	arg_count: u32,
+	enclosing_frame: Option<Frame>
+	stack_depth: u32,
+	// TODO: SourceMaps
 }
 
 pub struct ArrayObject {
