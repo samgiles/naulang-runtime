@@ -55,20 +55,23 @@ mod tests {
 	use super::Frame;
 	use naulang::objectspace::primitives::{Object,IntegerObject};
 
+	fn extract_primitive_integer(o: Option<Object>, default: i32) -> i32 {
+		match o {
+			Some(object) => match object {
+				Object::Integer(i_obj) => i_obj.get_value(),
+				_ => default,
+			},
+			None => default
+		}
+	}
+
 	#[test]
 	fn test_set_get_local_at() {
 		let mut frame = Frame::new(3, 1);
 		let integer_object = IntegerObject::new(42);
 		frame.set_local_at(0, Object::Integer(integer_object));
 		let local = frame.get_local_at(0);
-
-		let internal_value = match local {
-			Some(object) => match object {
-				Object::Integer(i_obj) => i_obj.get_value(),
-				_ => 0,
-			},
-			None => 0
-		};
+		let internal_value = extract_primitive_integer(local, 0);
 
 		assert!(internal_value == 42);
 	}
@@ -79,14 +82,7 @@ mod tests {
 		let integer_object = IntegerObject::new(42);
 		frame.push(Object::Integer(integer_object));
 		let popped_object = frame.pop();
-
-		let internal_value = match popped_object {
-			Some(object) => match object {
-				Object::Integer(i_obj) => i_obj.get_value(),
-				_ => 0,
-			},
-			None => 0
-		};
+		let internal_value = extract_primitive_integer(popped_object, 0);
 
 		assert!(internal_value == 42);
 
