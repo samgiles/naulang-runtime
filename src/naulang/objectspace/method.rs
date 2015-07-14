@@ -3,11 +3,12 @@ use std::vec;
 use naulang::interpreter::frame::Frame;
 use naulang::objectspace::primitives::Object;
 
+#[derive(Clone)]
 pub struct MethodObject {
 	literals: vec::Vec<Object>,
 	bytecodes: vec::Vec<u32>,
 	enclosing_frame: Option<Frame>,
-	arg_count: u32,
+	arg_count: usize,
 	stack_depth: usize,
 	// TODO: SourceMaps
 }
@@ -25,6 +26,19 @@ impl MethodObject {
 
 	pub fn get_bytecode(&self, at_point: usize) -> u32 {
 		self.bytecodes[at_point]
+	}
+
+	fn create_new_frame(&self, mut previous_frame: Frame, is_async: bool) -> Box<Frame> {
+		let mut new_frame = Frame::new(0, 0);
+
+		for index in (self.arg_count - 1)..0 {
+			match previous_frame.pop() {
+				Some(object) => new_frame.set_local_at(index, object),
+				None => ()
+			}
+		}
+
+		return new_frame;
 	}
 }
 
