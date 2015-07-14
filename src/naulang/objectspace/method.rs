@@ -24,7 +24,7 @@ impl MethodObject {
 	}
 
 	pub fn get_bytecode(&self, at_point: usize) -> u32 {
-		self.bytecodes[at_point] as u32
+		self.bytecodes[at_point]
 	}
 }
 
@@ -39,6 +39,6 @@ mod tests {
 			ByteCode.LOAD_CONST, 0,
 		]);
 
-		assert!(method.get_bytecode(0) == (ByteCode.LOAD_CONST as u32));
+		assert!(method.get_bytecode(0) == ByteCode.LOAD_CONST);
 	}
 }
