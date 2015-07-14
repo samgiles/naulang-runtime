@@ -1,0 +1,4 @@
+[package]
+name = "naulang_runtime"
+version = "0.1.0"
+authors = ["SamGiles <sam.e.giles@gmail.com>"]
