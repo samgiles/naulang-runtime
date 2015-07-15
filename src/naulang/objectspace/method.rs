@@ -1,6 +1,6 @@
 use std::vec;
 
-use naulang::interpreter::frame::Frame;
+use naulang::interpreter::frame::{Frame, FrameInfo};
 use naulang::objectspace::primitives::Object;
 
 #[derive(Clone)]
@@ -9,7 +9,7 @@ pub struct MethodObject {
 	bytecodes: vec::Vec<u32>,
 	enclosing_frame: Option<Frame>,
 	arg_count: usize,
-	stack_depth: usize,
+	pub stack_depth: usize,
 	// TODO: SourceMaps
 }
 
@@ -20,7 +20,7 @@ impl MethodObject {
 			literals: vec::Vec::new(),
 			enclosing_frame: Option::None,
 			arg_count: 0,
-			stack_depth: bytecodes.len(),
+			stack_depth: 0,
 		}
 	}
 
@@ -28,8 +28,13 @@ impl MethodObject {
 		self.bytecodes[at_point]
 	}
 
+
 	fn create_new_frame(&self, mut previous_frame: Frame, is_async: bool) -> Box<Frame> {
-		let mut new_frame = Frame::new(0, 0);
+		let mut new_frame = Frame::new(&FrameInfo {
+			stack_depth: self.stack_depth,
+			local_count: 0,
+			literal_count: 0,
+		});
 
 		for index in (self.arg_count - 1)..0 {
 			match previous_frame.pop() {

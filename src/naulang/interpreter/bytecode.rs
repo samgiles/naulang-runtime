@@ -1,4 +1,4 @@
-
+use std::vec;
 const _stack_effect_depends_on_args: i32 = -9999;
 
 pub struct Code {
@@ -36,6 +36,45 @@ pub struct Code {
 	pub	INVOKE_ASYNC: u32,
 	pub	CHAN_OUT: u32,
 	pub	CHAN_IN: u32,
+}
+
+impl Code {
+	fn get_stack_effect(bytecode: &u32) -> i32 {
+		stack_effects[*bytecode as usize]
+	}
+
+	fn stack_effect_depends_on_args(bytecode: &u32) -> bool {
+		Code::get_stack_effect(bytecode) == _stack_effect_depends_on_args
+	}
+
+	fn get_bytecode_length(bytecode: &u32) -> usize {
+		bytecode_lengths[*bytecode as usize]
+	}
+
+	pub fn calculate_stack_depth(bytecodes: &vec::Vec<u32>) -> usize {
+		let mut max_depth: i32 = 0;
+		let mut current_depth: i32 = 0;
+		let mut index = 0;
+		let length = bytecodes.len();
+
+		while index < length {
+			let bytecode = &bytecodes[index];
+
+			if Code::stack_effect_depends_on_args(bytecode) {
+				current_depth = current_depth + 1;
+			} else {
+				current_depth = current_depth + Code::get_stack_effect(bytecode);
+			}
+
+			if current_depth > max_depth {
+				max_depth = current_depth;
+			}
+
+			index += Code::get_bytecode_length(bytecode);
+		}
+
+		max_depth as usize
+	}
 }
 
 pub static ByteCode: Code = Code {
@@ -112,7 +151,7 @@ const stack_effects: [i32; 34]  = [
 	-2,  // chan in
 ];
 
-const lengths: [i32; 34] = [
+const bytecode_lengths: [usize; 34] = [
 	1,  // halt
 	2,  // load_const
 	2,  // load
@@ -148,3 +187,55 @@ const lengths: [i32; 34] = [
 	1,  // chan out
 	1,  // chan in
 ];
+
+#[cfg(test)]
+mod test {
+	use super::{ByteCode, Code};
+
+	#[test]
+	fn test_calculate_stack_depth() {
+		let stack_depth = Code::calculate_stack_depth(&vec!(
+			ByteCode.LOAD, 0,         // 1
+            ByteCode.LOAD_CONST, 1,   // 1
+            ByteCode.ADD,             // -1
+            ByteCode.LOAD, 1,         // 1
+            ByteCode.ADD,             // -1
+            ByteCode.STORE, 1,        // -1
+            ByteCode.LOAD, 1,         // 1
+            ByteCode.LOAD, 2,         // 1
+            ByteCode.LOAD, 3          // 1
+		));
+
+		assert!(stack_depth == 3);
+	}
+	#[test]
+	fn test_calculate_stack_depth2() {
+		let stack_depth = Code::calculate_stack_depth(&vec!(
+    		ByteCode.LOAD_CONST, 0,         // 1
+            ByteCode.JUMP_IF_FALSE, 37,     // -1
+            ByteCode.LOAD, 0,               // 1
+            ByteCode.CHAN_OUT,              // 0
+            ByteCode.STORE, 2,              // -1
+            ByteCode.LOAD, 2,               // 1
+            ByteCode.LOAD_CONST, 1,         // 1
+            ByteCode.GREATER_THAN,          // -1
+            ByteCode.JUMP_IF_FALSE, 27,     // -1
+            ByteCode.LOAD, 1,               // 1
+            ByteCode.LOAD_CONST, 2,         // 1
+            ByteCode.LOAD, 2,               // 1
+            ByteCode.CHAN_OUT,              // 0
+            ByteCode.ADD,                   // -1
+            ByteCode.CHAN_IN,               // -2
+            ByteCode.JUMP, 0,               // 0
+            ByteCode.LOAD, 1,               // 1
+            ByteCode.LOAD, 2,               // 1
+            ByteCode.CHAN_OUT,              // 0
+            ByteCode.CHAN_IN,               // -2
+            ByteCode.JUMP, 37,              // 0
+            ByteCode.JUMP, 0,               // 0
+            ByteCode.HALT                   // 0
+		));
+
+		assert!(stack_depth == 3);
+	}
+}

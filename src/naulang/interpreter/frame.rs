@@ -1,6 +1,12 @@
 use std::vec;
 use naulang::objectspace::primitives::{Object};
 
+pub struct FrameInfo {
+	pub stack_depth: usize,
+	pub local_count: usize,
+	pub literal_count: usize,
+}
+
 #[derive(Clone)]
 pub struct Frame {
 	stack: vec::Vec<Object>,
@@ -8,19 +14,25 @@ pub struct Frame {
 	access_link: Option<Box<Frame>>,
 	pc: u32,
 	locals: vec::Vec<Object>,
+	literals: vec::Vec<Object>,
 }
 
 impl Frame {
-	pub fn new(stack_size: usize, local_count: usize) -> Box<Frame> {
+	pub fn new(frame_info: &FrameInfo) -> Box<Frame> {
 		let mut new_frame = Frame {
-			stack: vec::Vec::with_capacity(stack_size),
+			stack: vec::Vec::with_capacity(frame_info.stack_depth),
 			pc: 0,
 			access_link: Option::None,
 			previous_frame: Option::None,
-			locals: vec::Vec::with_capacity(local_count)
+			locals: vec::Vec::with_capacity(frame_info.local_count),
+			literals: vec::Vec::with_capacity(frame_info.literal_count),
 		};
 
-		for _ in 0..local_count {
+		// REVIEW: Populate the locals space with some 'None' objects - to
+		// allow random access - maybe we could
+		// do this at init time or use 'Vec::get(&self) -> Option<&Object>'
+		// and match at retrieval time?
+		for _ in 0..frame_info.local_count {
 			new_frame.locals.push(Object::None);
 		}
 
@@ -51,11 +63,20 @@ impl Frame {
 	pub fn get_local_at(&self, index: usize) -> Option<&Object> {
 		self.locals.get(index)
 	}
+
+	pub fn set_literal_at(&mut self, index: usize, object: Object) -> () {
+		self.literals[index] = object;
+	}
+
+	pub fn get_literal_at(&self, index: usize) -> Option<&Object> {
+		self.literals.get(index)
+	}
 }
+
 
 #[cfg(test)]
 mod tests {
-	use super::Frame;
+	use super::{Frame, FrameInfo};
 	use naulang::objectspace::primitives::{Object,IntegerObject};
 
 	fn extract_referenced_primitive_integer(o: Option<&Object>, default: i32) -> i32 {
@@ -77,7 +98,11 @@ mod tests {
 
 	#[test]
 	fn test_set_get_local_at() {
-		let mut frame = Frame::new(3, 1);
+		let mut frame = Frame::new(&FrameInfo {
+			stack_depth: 1,
+			local_count: 1,
+			literal_count: 1,
+		});
 		let integer_object = IntegerObject::new(42);
 		frame.set_local_at(0, Object::Integer(integer_object));
 		let local = frame.get_local_at(0);
@@ -88,7 +113,12 @@ mod tests {
 
 	#[test]
 	fn test_push_peek_pop() {
-		let mut frame = Frame::new(3, 1);
+		let mut frame = Frame::new(&FrameInfo {
+			stack_depth: 1,
+			local_count: 1,
+			literal_count: 1,
+		});
+
 		let integer_object = IntegerObject::new(42);
 		frame.push(Object::Integer(integer_object));
 
