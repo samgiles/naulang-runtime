@@ -20,7 +20,7 @@ impl Frame {
 			locals: vec::Vec::with_capacity(local_count)
 		};
 
-		for x in 0..local_count {
+		for _ in 0..local_count {
 			new_frame.locals.push(Object::None);
 		}
 
