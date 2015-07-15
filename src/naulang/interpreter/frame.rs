@@ -37,16 +37,21 @@ impl Frame {
 		self.stack.push(object);
 	}
 
+	pub fn peek(&self) -> Option<&Object> {
+		let stack_top = self.stack.len() - 1;
+		self.stack.get(stack_top)
+	}
+
+	pub fn stack_height(&self) -> usize {
+		self.stack.len()
+	}
+
 	pub fn set_local_at(&mut self, index: usize, object: Object) -> () {
 		self.locals[index] = object;
 	}
 
-	pub fn get_local_at(&self, index: usize) -> Option<Object> {
-		if index >= self.locals.len() || index < 0 {
-			Option::None
-		} else {
-			Option::Some(self.locals[index].clone())
-		}
+	pub fn get_local_at(&self, index: usize) -> Option<&Object> {
+		self.locals.get(index)
 	}
 }
 
@@ -55,12 +60,19 @@ mod tests {
 	use super::Frame;
 	use naulang::objectspace::primitives::{Object,IntegerObject};
 
-	fn extract_primitive_integer(o: Option<Object>, default: i32) -> i32 {
+	fn extract_referenced_primitive_integer(o: Option<&Object>, default: i32) -> i32 {
 		match o {
-			Some(object) => match object {
-				Object::Integer(i_obj) => i_obj.get_value(),
+			Some(object) => match *object {
+				Object::Integer(ref i_obj) => i_obj.get_value(),
 				_ => default,
 			},
+			None => default
+		}
+	}
+
+	fn extract_primitive_integer(o: Option<Object>, default: i32) -> i32 {
+		match o {
+			Some(object) => extract_referenced_primitive_integer(Some(&object), default),
 			None => default
 		}
 	}
@@ -71,19 +83,32 @@ mod tests {
 		let integer_object = IntegerObject::new(42);
 		frame.set_local_at(0, Object::Integer(integer_object));
 		let local = frame.get_local_at(0);
-		let internal_value = extract_primitive_integer(local, 0);
+		let internal_value = extract_referenced_primitive_integer(local, 0);
 
 		assert!(internal_value == 42);
 	}
 
 	#[test]
-	fn test_push_pop() {
+	fn test_push_peek_pop() {
 		let mut frame = Frame::new(3, 1);
 		let integer_object = IntegerObject::new(42);
 		frame.push(Object::Integer(integer_object));
-		let popped_object = frame.pop();
-		let internal_value = extract_primitive_integer(popped_object, 0);
 
-		assert!(internal_value == 42);
+		assert!(frame.stack_height() == 1);
+
+		// Scoped so the lifetime of borrowed peeked_object is controlled here
+		{
+			let peeked_object = frame.peek();
+			let peeked_value = extract_referenced_primitive_integer(peeked_object, 0);
+			assert!(peeked_value == 42);
+			assert!(frame.stack_height() == 1);
+		}
+
+		let popped_object = frame.pop();
+		let popped_value = extract_primitive_integer(popped_object, 0);
+
+		assert!(popped_value == 42);
+		assert!(frame.stack_height() == 0);
+
 	}
 }
