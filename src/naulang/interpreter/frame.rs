@@ -4,7 +4,6 @@ use naulang::objectspace::primitives::{Object};
 #[derive(Clone)]
 pub struct Frame {
 	stack: vec::Vec<Object>,
-	stack_pointer: u32,
 	previous_frame: Option<Box<Frame>>,
 	access_link: Option<Box<Frame>>,
 	pc: u32,
@@ -12,14 +11,13 @@ pub struct Frame {
 }
 
 impl Frame {
-	pub fn new(stack_size: u32, local_count: u32) -> Box<Frame> {
+	pub fn new(stack_size: usize, local_count: usize) -> Box<Frame> {
 		let mut new_frame = Frame {
-			stack: vec::Vec::new(),
-			stack_pointer: 0,
+			stack: vec::Vec::with_capacity(stack_size),
 			pc: 0,
 			access_link: Option::None,
 			previous_frame: Option::None,
-			locals: vec::Vec::new()
+			locals: vec::Vec::with_capacity(local_count)
 		};
 
 		for x in 0..local_count {
