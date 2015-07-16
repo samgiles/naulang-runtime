@@ -10,7 +10,7 @@ pub struct FrameInfo {
 #[derive(Clone)]
 pub struct Frame {
     stack: vec::Vec<Object>,
-    previous_frame: Option<Box<Frame>>,
+    pub previous_frame: Option<Box<Frame>>,
     access_link: Option<Box<Frame>>,
     pc: u32,
     locals: vec::Vec<Object>,

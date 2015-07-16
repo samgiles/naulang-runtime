@@ -14,7 +14,7 @@ pub struct Task<'task> {
     state:       TaskState,
 
     /// Represents the top of the current stack this task is running.
-    top_frame:   Option<&'task mut Frame>,
+    top_frame:   Option<&'task Frame>,
 
     /// The task that spawned this task
     parent_task: Option<Box<Task<'task>>>,
@@ -29,10 +29,34 @@ impl<'task> Task<'task> {
         }
     }
 
+    pub fn new_withframe(frame: &'task Box<Frame>, parent_task: Option<Box<Task<'task>>>) -> Task<'task> {
+        Task {
+            state: TaskState::Continue,
+            top_frame: Some(frame),
+            parent_task: parent_task
+        }
+    }
+
+    pub fn restore_previous_frame(&mut self) -> bool {
+        match self.top_frame {
+            Some(top_frame) => {
+                match top_frame.previous_frame {
+                    Some(ref previous_frame) => {
+                        self.top_frame = Some(previous_frame);
+                        true
+                    }
+                    None => false
+                }
+            },
+            None => false
+        }
+    }
+
     pub fn set_parent_task(&mut self, task: Task<'task>) -> () {
         self.parent_task =  Some(Box::new(task));
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -43,6 +67,32 @@ mod tests {
     #[test]
     fn test_new_task_state() {
         assert!(Task::new().state == TaskState::Continue);
+    }
+
+    #[test]
+    fn test_restore_previous_frame() {
+        let stack_root = Frame::new(&FrameInfo {
+            stack_depth: 1,
+            local_count: 1,
+            literal_count: 1,
+        });
+
+        let mut next_stack = Frame::new(&FrameInfo {
+            stack_depth: 1,
+            local_count: 1,
+            literal_count: 1,
+        });
+
+        next_stack.previous_frame = Some(stack_root);
+
+        {
+            let top_frame = next_stack;
+            let mut task = Task::new_withframe(&top_frame, None);
+            let frame_restored = task.restore_previous_frame();
+            assert!(frame_restored);
+            let frame_restored = task.restore_previous_frame();
+            assert!(!frame_restored);
+        }
     }
 
     #[test]
