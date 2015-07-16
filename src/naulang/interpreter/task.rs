@@ -1,5 +1,4 @@
 use naulang::interpreter::frame::Frame;
-use std::rc::Rc;
 
 #[derive(PartialEq)]
 pub enum TaskState {
@@ -12,7 +11,7 @@ pub enum TaskState {
 pub struct Task<'task> {
     state:       TaskState,
     top_frame:   Option<&'task mut Frame>,
-    parent_task: Option<Rc<Task<'task>>>,
+    parent_task: Option<Box<Task<'task>>>,
 }
 
 impl<'task> Task<'task> {
@@ -25,8 +24,7 @@ impl<'task> Task<'task> {
     }
 
     pub fn set_parent_task(&mut self, task: Task<'task>) -> () {
-        let rc_task = Rc::new(task);
-        self.parent_task = Some(rc_task);
+        self.parent_task =  Some(Box::new(task));
     }
 }
 
