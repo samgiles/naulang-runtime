@@ -11,10 +11,10 @@ pub enum TaskState {
 /// Represents a independently running function and its call stack
 pub struct Task<'task> {
     /// The current state of this task as TaskState
-    state:       TaskState,
+    pub state:       TaskState,
 
     /// Represents the top of the current stack this task is running.
-    top_frame:   Option<&'task Frame>,
+    pub top_frame:   Option<&'task Frame<'task>>,
 
     /// The task that spawned this task
     parent_task: Option<Box<Task<'task>>>,
@@ -37,8 +37,8 @@ impl<'task> Task<'task> {
         }
     }
 
-    pub fn restore_previous_frame(&mut self) -> bool {
-        match self.top_frame {
+    pub fn restore_previous_frame_or_halt(&mut self) -> bool {
+        let task_still_running = match self.top_frame {
             Some(top_frame) => {
                 match top_frame.previous_frame {
                     Some(ref previous_frame) => {
@@ -49,7 +49,10 @@ impl<'task> Task<'task> {
                 }
             },
             None => false
-        }
+        };
+
+        self.state = TaskState::Halt;
+        return task_still_running
     }
 
     pub fn set_parent_task(&mut self, task: Task<'task>) -> () {
@@ -62,6 +65,7 @@ impl<'task> Task<'task> {
 mod tests {
     use super::{Task, TaskState};
     use naulang::interpreter::frame::{Frame, FrameInfo};
+    use naulang::objectspace::method::{MethodObject};
     use std::ops::Deref;
 
     #[test]
@@ -71,16 +75,20 @@ mod tests {
 
     #[test]
     fn test_restore_previous_frame() {
-        let stack_root = Frame::new(&FrameInfo {
+        let method = MethodObject::new_stub();
+
+        let stack_root = Frame::new(FrameInfo {
             stack_depth: 1,
             local_count: 1,
             literal_count: 1,
+            method: &method,
         });
 
-        let mut next_stack = Frame::new(&FrameInfo {
+        let mut next_stack = Frame::new(FrameInfo {
             stack_depth: 1,
             local_count: 1,
             literal_count: 1,
+            method: &method,
         });
 
         next_stack.previous_frame = Some(stack_root);
@@ -88,10 +96,11 @@ mod tests {
         {
             let top_frame = next_stack;
             let mut task = Task::new_withframe(&top_frame, None);
-            let frame_restored = task.restore_previous_frame();
+            let frame_restored = task.restore_previous_frame_or_halt();
             assert!(frame_restored);
-            let frame_restored = task.restore_previous_frame();
+            let frame_restored = task.restore_previous_frame_or_halt();
             assert!(!frame_restored);
+            assert!(task.state == TaskState::Halt);
         }
     }
 

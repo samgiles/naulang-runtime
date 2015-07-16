@@ -2,23 +2,26 @@ use std::vec;
 
 use naulang::interpreter::frame::{Frame, FrameInfo};
 use naulang::objectspace::primitives::Object;
+use naulang::interpreter::bytecode::ByteCode;
 
 #[derive(Clone)]
 pub struct MethodObject {
     literals: vec::Vec<Object>,
     bytecodes: vec::Vec<u32>,
-    enclosing_frame: Option<Frame>,
     arg_count: usize,
     pub stack_depth: usize,
     // TODO: SourceMaps
 }
 
 impl MethodObject {
+    pub fn new_stub() -> MethodObject {
+        MethodObject::new(vec!(ByteCode.HALT))
+    }
+
     pub fn new(bytecodes: vec::Vec<u32>) -> MethodObject {
         MethodObject {
             bytecodes: bytecodes.clone(),
             literals: vec::Vec::new(),
-            enclosing_frame: Option::None,
             arg_count: 0,
             stack_depth: 0,
         }
@@ -30,10 +33,11 @@ impl MethodObject {
 
 
     fn create_new_frame(&self, mut previous_frame: Frame, is_async: bool) -> Box<Frame> {
-        let mut new_frame = Frame::new(&FrameInfo {
+        let mut new_frame = Frame::new(FrameInfo {
             stack_depth: self.stack_depth,
             local_count: 0,
             literal_count: 0,
+            method: self,
         });
 
         for index in (self.arg_count - 1)..0 {

@@ -1,29 +1,34 @@
 use std::vec;
 use naulang::objectspace::primitives::{Object};
+use naulang::objectspace::method::MethodObject;
 
-pub struct FrameInfo {
+pub struct FrameInfo<'fi> {
     pub stack_depth: usize,
     pub local_count: usize,
     pub literal_count: usize,
+    pub method: &'fi MethodObject,
 }
 
 #[derive(Clone)]
-pub struct Frame {
+pub struct Frame<'f> {
+    pub previous_frame: Option<Box<Frame<'f>>>,
+    pub method: &'f MethodObject,
+    pub pc: usize,
+
     stack: vec::Vec<Object>,
-    pub previous_frame: Option<Box<Frame>>,
-    access_link: Option<Box<Frame>>,
-    pc: u32,
+    access_link: Option<Box<Frame<'f>>>,
     locals: vec::Vec<Object>,
     literals: vec::Vec<Object>,
 }
 
-impl Frame {
-    pub fn new(frame_info: &FrameInfo) -> Box<Frame> {
+impl<'f> Frame<'f> {
+    pub fn new(frame_info: FrameInfo<'f>) -> Box<Frame<'f>> {
         let mut new_frame = Frame {
+            previous_frame: Option::None,
+            method: frame_info.method,
             stack: vec::Vec::with_capacity(frame_info.stack_depth),
             pc: 0,
             access_link: Option::None,
-            previous_frame: Option::None,
             locals: vec::Vec::with_capacity(frame_info.local_count),
             literals: vec::Vec::with_capacity(frame_info.literal_count),
         };
@@ -78,6 +83,7 @@ impl Frame {
 mod tests {
     use super::{Frame, FrameInfo};
     use naulang::objectspace::primitives::{Object,IntegerObject};
+    use naulang::objectspace::method::{MethodObject};
 
     fn extract_referenced_primitive_integer(o: Option<&Object>, default: i32) -> i32 {
         match o {
@@ -98,10 +104,13 @@ mod tests {
 
     #[test]
     fn test_set_get_local_at() {
-        let mut frame = Frame::new(&FrameInfo {
+        let method = MethodObject::new_stub();
+
+        let mut frame = Frame::new(FrameInfo {
             stack_depth: 1,
             local_count: 1,
             literal_count: 1,
+            method: &method,
         });
         let integer_object = IntegerObject::new(42);
         frame.set_local_at(0, Object::Integer(integer_object));
@@ -113,10 +122,12 @@ mod tests {
 
     #[test]
     fn test_push_peek_pop() {
-        let mut frame = Frame::new(&FrameInfo {
+        let method = MethodObject::new_stub();
+        let mut frame = Frame::new(FrameInfo {
             stack_depth: 1,
             local_count: 1,
             literal_count: 1,
+            method: &method,
         });
 
         let integer_object = IntegerObject::new(42);
