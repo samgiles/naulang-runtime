@@ -8,9 +8,15 @@ pub enum TaskState {
     Suspend,
 }
 
+/// Represents a independently running function and its call stack
 pub struct Task<'task> {
+    /// The current state of this task as TaskState
     state:       TaskState,
+
+    /// Represents the top of the current stack this task is running.
     top_frame:   Option<&'task mut Frame>,
+
+    /// The task that spawned this task
     parent_task: Option<Box<Task<'task>>>,
 }
 
