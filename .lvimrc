@@ -1,0 +1,4 @@
+set expandtab
+set tabstop=4   	" tabstops of 8
+set shiftwidth=4	" indents of 8
+set textwidth=80  " screen in 80 columns wide, wrap at 78
