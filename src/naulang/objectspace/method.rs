@@ -32,6 +32,10 @@ impl<'m> MethodObject<'m> {
         self.bytecodes[at_point]
     }
 
+    pub fn get_literal_at(&self, index: usize) -> Option<&Object> {
+        self.literals.get(index)
+    }
+
 
     fn create_new_frame<'a>(&'a self, mut previous_frame: Frame<'a>, is_async: bool) -> Box<Frame> {
         let mut new_frame = Frame::new(FrameInfo {
@@ -55,14 +59,29 @@ impl<'m> MethodObject<'m> {
 #[cfg(test)]
 mod tests {
     use super::MethodObject;
+    use naulang::objectspace::primitives::{Object};
     use naulang::interpreter::bytecode::Bytecode;
+
+    #[test]
+    fn test_get_literal_at() {
+        let literals = vec!(Object::None);
+        let method = MethodObject::new(vec!(Bytecode::HALT), &literals, 0);
+
+        assert!(match method.get_literal_at(0) {
+            Some(obj) => match *obj {
+                Object::None => true,
+                _ => false
+            },
+            None => false
+        });
+    }
 
     #[test]
     fn test_get_bytecode() {
         let literals = vec!();
-        let method: MethodObject = MethodObject::new(vec![
+        let method: MethodObject = MethodObject::new(vec!(
             Bytecode::LOAD_CONST, 0,
-        ], &literals, 0);
+        ), &literals, 0);
 
         assert!(method.get_bytecode(0) == Bytecode::LOAD_CONST);
     }
