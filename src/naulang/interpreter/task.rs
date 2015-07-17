@@ -65,6 +65,7 @@ impl<'task> Task<'task> {
 mod tests {
     use super::{Task, TaskState};
     use naulang::interpreter::frame::{Frame, FrameInfo};
+    use naulang::interpreter::bytecode::Bytecode;
     use naulang::objectspace::method::{MethodObject};
     use std::ops::Deref;
 
@@ -75,7 +76,8 @@ mod tests {
 
     #[test]
     fn test_restore_previous_frame() {
-        let method = MethodObject::new_stub();
+        let literals = vec!();
+        let method = MethodObject::new(vec!(Bytecode::HALT), &literals, 0);
 
         let stack_root = Frame::new(FrameInfo {
             stack_depth: 1,

@@ -6,19 +6,18 @@ pub struct FrameInfo<'fi> {
     pub stack_depth: usize,
     pub local_count: usize,
     pub literal_count: usize,
-    pub method: &'fi MethodObject,
+    pub method: &'fi MethodObject<'fi>,
 }
 
 #[derive(Clone)]
 pub struct Frame<'f> {
     pub previous_frame: Option<Box<Frame<'f>>>,
-    pub method: &'f MethodObject,
+    pub method: &'f MethodObject<'f>,
     pub pc: usize,
 
-    stack: vec::Vec<Object>,
+    stack: vec::Vec<Object<'f>>,
     access_link: Option<Box<Frame<'f>>>,
-    locals: vec::Vec<Object>,
-    literals: vec::Vec<Object>,
+    locals: vec::Vec<Object<'f>>,
 }
 
 impl<'f> Frame<'f> {
@@ -30,7 +29,6 @@ impl<'f> Frame<'f> {
             pc: 0,
             access_link: Option::None,
             locals: vec::Vec::with_capacity(frame_info.local_count),
-            literals: vec::Vec::with_capacity(frame_info.literal_count),
         };
 
         // REVIEW: Populate the locals space with some 'None' objects - to
@@ -44,11 +42,11 @@ impl<'f> Frame<'f> {
         return Box::new(new_frame);
     }
 
-    pub fn pop(&mut self) -> Option<Object> {
+    pub fn pop(&mut self) -> Option<Object<'f>> {
         self.stack.pop()
     }
 
-    pub fn push(&mut self, object: Object) -> () {
+    pub fn push(&mut self, object: Object<'f>) -> () {
         self.stack.push(object);
     }
 
@@ -61,7 +59,7 @@ impl<'f> Frame<'f> {
         self.stack.len()
     }
 
-    pub fn set_local_at(&mut self, index: usize, object: Object) -> () {
+    pub fn set_local_at(&mut self, index: usize, object: Object<'f>) -> () {
         self.locals[index] = object;
     }
 
@@ -69,12 +67,8 @@ impl<'f> Frame<'f> {
         self.locals.get(index)
     }
 
-    pub fn set_literal_at(&mut self, index: usize, object: Object) -> () {
-        self.literals[index] = object;
-    }
-
     pub fn get_literal_at(&self, index: usize) -> Option<&Object> {
-        self.literals.get(index)
+        self.method.literals.get(index)
     }
 }
 
@@ -84,6 +78,7 @@ mod tests {
     use super::{Frame, FrameInfo};
     use naulang::objectspace::primitives::{Object,IntegerObject};
     use naulang::objectspace::method::{MethodObject};
+    use naulang::interpreter::bytecode::Bytecode;
 
     fn extract_referenced_primitive_integer(o: Option<&Object>, default: i32) -> i32 {
         match o {
@@ -104,7 +99,8 @@ mod tests {
 
     #[test]
     fn test_set_get_local_at() {
-        let method = MethodObject::new_stub();
+        let literals = vec!();
+        let method = MethodObject::new(vec!(Bytecode::HALT), &literals, 0);
 
         let mut frame = Frame::new(FrameInfo {
             stack_depth: 1,
@@ -122,7 +118,8 @@ mod tests {
 
     #[test]
     fn test_push_peek_pop() {
-        let method = MethodObject::new_stub();
+        let literals = vec!();
+        let method = MethodObject::new(vec!(Bytecode::HALT), &literals, 0);
         let mut frame = Frame::new(FrameInfo {
             stack_depth: 1,
             local_count: 1,

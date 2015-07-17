@@ -2,34 +2,34 @@ use std::vec;
 use naulang::objectspace::method::MethodObject;
 
 #[derive(Clone)]
-pub enum Object {
+pub enum Object<'o> {
     String(StringObject),
     Integer(IntegerObject),
     Float(FloatObject),
     Boolean(BooleanObject),
-    Array(ArrayObject),
-    Method(MethodObject),
+    Array(ArrayObject<'o>),
+    Method(MethodObject<'o>),
     None,
 }
 
 #[derive(Clone)]
-pub struct ArrayObject {
-    value: vec::Vec<Object>,
+pub struct ArrayObject<'a> {
+    pub value: vec::Vec<Object<'a>>,
 }
 
 #[derive(Clone)]
 pub struct BooleanObject {
-    value: bool,
+    pub value: bool,
 }
 
 #[derive(Clone)]
 pub struct StringObject {
-    value: String,
+    pub value: String,
 }
 
 #[derive(Clone)]
 pub struct IntegerObject {
-    value: i32,
+    pub value: i32,
 }
 
 impl IntegerObject {
@@ -44,5 +44,5 @@ impl IntegerObject {
 
 #[derive(Clone)]
 pub struct FloatObject {
-    value: f32,
+    pub value: f32,
 }

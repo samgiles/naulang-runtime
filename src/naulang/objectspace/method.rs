@@ -5,25 +5,26 @@ use naulang::objectspace::primitives::Object;
 use naulang::interpreter::bytecode::Bytecode;
 
 #[derive(Clone)]
-pub struct MethodObject {
-    literals: vec::Vec<Object>,
+pub struct MethodObject<'m> {
+    pub literals: &'m vec::Vec<Object<'m>>,
+    pub stack_depth: usize,
     bytecodes: vec::Vec<u32>,
     arg_count: usize,
-    pub stack_depth: usize,
     // TODO: SourceMaps
 }
 
-impl MethodObject {
-    pub fn new_stub() -> MethodObject {
-        MethodObject::new(vec!(Bytecode::HALT))
-    }
+impl<'m> MethodObject<'m> {
 
-    pub fn new(bytecodes: vec::Vec<u32>) -> MethodObject {
+    pub fn new(
+        bytecodes: vec::Vec<u32>, literals: &'m vec::Vec<Object<'m>>,  arg_count: usize)
+    -> MethodObject<'m> {
+
+        let stack_depth = Bytecode::calculate_stack_depth(&bytecodes);
         MethodObject {
             bytecodes: bytecodes.clone(),
-            literals: vec::Vec::new(),
-            arg_count: 0,
-            stack_depth: 0,
+            literals: literals,
+            arg_count: arg_count,
+            stack_depth: stack_depth,
         }
     }
 
@@ -32,7 +33,7 @@ impl MethodObject {
     }
 
 
-    fn create_new_frame(&self, mut previous_frame: Frame, is_async: bool) -> Box<Frame> {
+    fn create_new_frame<'a>(&'a self, mut previous_frame: Frame<'a>, is_async: bool) -> Box<Frame> {
         let mut new_frame = Frame::new(FrameInfo {
             stack_depth: self.stack_depth,
             local_count: 0,
@@ -58,9 +59,10 @@ mod tests {
 
     #[test]
     fn test_get_bytecode() {
+        let literals = vec!();
         let method: MethodObject = MethodObject::new(vec![
             Bytecode::LOAD_CONST, 0,
-        ]);
+        ], &literals, 0);
 
         assert!(method.get_bytecode(0) == Bytecode::LOAD_CONST);
     }
