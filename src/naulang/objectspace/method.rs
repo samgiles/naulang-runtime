@@ -2,7 +2,7 @@ use std::vec;
 
 use naulang::interpreter::frame::{Frame, FrameInfo};
 use naulang::objectspace::primitives::Object;
-use naulang::interpreter::bytecode::ByteCode;
+use naulang::interpreter::bytecode::Bytecode;
 
 #[derive(Clone)]
 pub struct MethodObject {
@@ -15,7 +15,7 @@ pub struct MethodObject {
 
 impl MethodObject {
     pub fn new_stub() -> MethodObject {
-        MethodObject::new(vec!(ByteCode.HALT))
+        MethodObject::new(vec!(Bytecode::HALT))
     }
 
     pub fn new(bytecodes: vec::Vec<u32>) -> MethodObject {
@@ -54,14 +54,14 @@ impl MethodObject {
 #[cfg(test)]
 mod tests {
     use super::MethodObject;
-    use naulang::interpreter::bytecode::ByteCode;
+    use naulang::interpreter::bytecode::Bytecode;
 
     #[test]
     fn test_get_bytecode() {
         let method: MethodObject = MethodObject::new(vec![
-            ByteCode.LOAD_CONST, 0,
+            Bytecode::LOAD_CONST, 0,
         ]);
 
-        assert!(method.get_bytecode(0) == ByteCode.LOAD_CONST);
+        assert!(method.get_bytecode(0) == Bytecode::LOAD_CONST);
     }
 }

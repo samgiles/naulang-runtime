@@ -1,6 +1,4 @@
 use std::vec;
-use naulang::interpreter::bytecode::ByteCode;
-
 use naulang::objectspace::method::MethodObject;
 
 #[derive(Clone)]
