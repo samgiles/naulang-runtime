@@ -29,6 +29,7 @@ mod tests {
     use naulang::interpreter::bytecode::Bytecode;
 
     #[test]
+    #[ignore]
     fn test_interpreter_step_task_load_const() {
         let literal = Object::Integer(IntegerObject { value: 42 });
         let literals = vec!(literal);
