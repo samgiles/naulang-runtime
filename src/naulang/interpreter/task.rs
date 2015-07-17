@@ -14,7 +14,7 @@ pub struct Task<'task> {
     pub state:       TaskState,
 
     /// Represents the top of the current stack this task is running.
-    pub top_frame:   Option<&'task Frame<'task>>,
+    pub top_frame:   Option<&'task Box<Frame<'task>>>,
 
     /// The task that spawned this task
     parent_task: Option<Box<Task<'task>>>,

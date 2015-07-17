@@ -10,7 +10,7 @@ pub fn interpreter_step(task: &mut Task) -> bool {
     }
 }
 
-fn run_interpreter_step(frame: &Frame, task: &mut Task) -> bool {
+fn run_interpreter_step(frame: &Box<Frame>, task: &mut Task) -> bool {
     let bytecode = frame.method.get_bytecode(frame.pc);
 
     match bytecode {
